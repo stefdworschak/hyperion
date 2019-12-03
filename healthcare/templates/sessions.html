@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+    .card {
+        width:100%!important;
+        margin:10px 10px 5px 10px!important;
+    }
+    .container-fluid {
+        width:80%!important;
+        margin-left:20px!important;
+    }
+</style>
+{% csrf_token %}
+<script>
+    
+    // CSRF Token usage from django website
+    // https://docs.djangoproject.com/en/2.2/ref/csrf/
+    const csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
+    $(document).ready(function(){
+        
+        // CSRF Token usage from django website
+        // https://docs.djangoproject.com/en/2.2/ref/csrf/
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+        });
+
+        $('.btn.btn-primary').click(requestSharing);
+
+        function updateData(){
+            
+            $.ajax({
+                method:'POST',
+                url:'update/',
+                success:function(res){
+                    console.log(res);
+                    const json = JSON.parse(res);
+                    let template = "";
+                    let button_template = "";
+                    while(json.length >0){
+                        const doc = json.shift();
+                        switch(doc.session_shared){
+                            case '0':
+                                button_template = `
+                                    <a href="#" class="btn btn-primary" 
+                                    data-session-id=${ doc.session_id }>Request Data Access</a>`;
+                                break;
+                            case '1':
+                                button_template = `
+                                    <a href="#" class="btn btn-primary disabled" 
+                                    data-session-id=${ doc.session_id }>Waiting For Access</a>`;
+                                break;
+                            case '2':
+                                button_template = `
+                                    <a href="#" class="btn btn-success" 
+                                    data-session-id=${ doc.session_id }>Data Shared</a>`;
+                                break;
+                            default:
+                                button_template = `
+                                        <a href="#" class="btn btn-primary" 
+                                        data-session-id=${ doc.session_id }>Request Data Access</a>`;
+                                break;
+                        }
+
+                        template += `
+                        <div class="row pull-left">
+                            <div class="card" width="100%">
+                                <div class="card-header">
+                                    Session Checkin: ${ doc.session_checkin }
+                                </div>
+                                <div class="card-body">
+                                    <h5 class="card-title">SESSION ID: ${ doc.session_id }</h5>
+                                    <p class="card-text">
+                                        <strong>Symptoms:</strong> <br />
+                                        ${ doc.session_details.symptoms }
+                                        <br />
+                                        <strong>Duration:</strong> ${ doc.session_details.symptoms_duration } <br />
+                                        <strong>Pain Scale:</strong> ${ doc.session_details.pain_scale } <br />
+                                        <strong>Pre-Conditions:</strong> ${ doc.session_details.pre_conditions } <br />
+                                    
+                                    </p>
+                                    ` + button_template + `
+                                </div>
+                            </div>
+                        </div>`;
+                    }
+                    $('#sessions').html(template);
+
+                    $('.btn.btn-primary').click(requestSharing);
+                    setTimeout(updateData,20000);
+                },
+                failure: function(err){
+                    console.log("Error");
+                    conosole.log(err);
+                    setTimeout(updateData,20000);
+                }
+            })
+        }
+        updateData();
+
+        function requestSharing(){
+
+            $(this).prop('disabled',true);
+
+
+            const sid = $(this).attr('data-session-id');
+            $.ajax({
+                method:'POST',
+                url:'sharing/',
+                data:{
+                    session_id: sid,
+                    session_shared: 1
+                },
+                success:function(res){
+                    console.log(res);
+                },
+                failure:function(err){
+                    console.log(err);
+                }
+            })
+        }
+    })
+
+    function csrfSafeMethod(method) {
+        // these HTTP methods do not require CSRF protection
+        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+    }
+</script>
+
+<div class="container-fluid" id="sessions">
+
+    {% for doc in docs %}
+    <div class="row pull-left">
+        <div class="card" width="100%">
+            <div class="card-header">
+                Session Checkin: {{ doc.session_checkin }}
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">SESSION ID: {{ doc.session_id }}</h5>
+                <p class="card-text">
+                    <strong>Symptoms:</strong> <br />
+                    {{ doc.session_details.symptoms }}
+                    <br />
+                    <strong>Duration:</strong> {{ doc.session_details.symptoms_duration }} <br />
+                    <strong>Pain Scale:</strong> {{ doc.session_details.pain_scale }} <br />
+                    <strong>Pre-Conditions:</strong> {{ doc.session_details.pre_conditions }} <br />
+                
+                </p>
+                <a href="#" class="btn btn-primary {% if doc.session_shared > 0 %}disabled{% endif %}">Request Data Access</a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+</div>
+{% endblock %}

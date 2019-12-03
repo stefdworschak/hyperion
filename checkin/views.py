@@ -2,6 +2,8 @@ from django.shortcuts import render,redirect
 from random import randrange
 from datetime import datetime as dt
 
+import modules.firebase as fb
+
 # Create your views here.
 
 def index(request):
@@ -9,6 +11,17 @@ def index(request):
 
 def checkin(request):
     randomID = randID(10,2)
+    fire = fb.Firebase('patient')
+    fire.insertSession({
+        'session_id' : randomID,
+        'session_details': {
+            'symptoms':request.POST.get('symptoms'),
+            'symptoms_duration':request.POST.get('symptoms_duration'),
+            'pain_scale':request.POST.get('pain_scale'),
+            'pre_conditions':request.POST.get('pre_conditions')
+        }
+    })
+
     return render(request, 'checkin_success.html',{'randID':randomID})
 
 def randID(length, type):
