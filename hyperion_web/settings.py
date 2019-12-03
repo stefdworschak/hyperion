@@ -25,7 +25,9 @@ SECRET_KEY = 'tqb7waq__bftvn0y1=g-ur&sga=b#!d4k(5!59=y1+qm8iv6tg'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'https://hyperion-app.herokuapp.com/',
+    ]
 
 
 # Application definition
