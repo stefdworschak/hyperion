@@ -27,7 +27,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = [
     'https://hyperion-app.herokuapp.com/',
-    'hyperion-app.herokuapp.com'
+    'hyperion-app.herokuapp.com',
+    'localhost'
     ]
 
 
