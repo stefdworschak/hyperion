@@ -46,7 +46,8 @@ INSTALLED_APPS = [
     
     #Custom Apps
     'checkin',
-    'healthcare'
+    'healthcare',
+    'api',
 ]
 
 MIDDLEWARE = [

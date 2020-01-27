@@ -1,6 +1,9 @@
+import argparse
+from datetime import datetime as dt
 import json
 from bson import json_util
-from datetime import datetime as dt
+import os
+import requests
 
 from django.http import HttpResponse
 from django.shortcuts import render
@@ -8,12 +11,15 @@ from django.shortcuts import render
 
 # Most from firebase documentation
 # https://firebase.google.com/docs/firestore/query-data/get-data
+import env_vars
 import modules.firebase as fb
 
-# Firebase messaging from here:
+# Firebase Firestor from here:
 # https://github.com/firebase/firebase-admin-python
 from firebase_admin.messaging import (Message, Notification, send)
 
+FCM_URL = os.environ.get('FCM_URL')
+FCM_SCOPES = list(os.environ.get('FCM_SCOPES'))
 
 # Create your views here.
 def index(request):
@@ -25,6 +31,7 @@ def index(request):
         d = doc.to_dict() 
         d['session_checkin'] = d['session_checkin'].strftime('%Y-%m-%d %H:%M:%S')
         doc_list.append(d)
+    doc_list = sorted(doc_list, key=lambda x: x['session_checkin'], reverse = True) 
     return render(request, "sessions.html", { 'docs' : doc_list })
 
 def updateData(request):
@@ -36,7 +43,7 @@ def updateData(request):
         d = doc.to_dict() 
         d['session_checkin'] = d['session_checkin'].strftime('%Y-%m-%d %H:%M:%S')
         doc_list.append(d)
-    
+    doc_list = sorted(doc_list, key=lambda x: x['session_checkin'], reverse = True)
     return HttpResponse(json.dumps(doc_list, default=json_util.default), content_type="application/javascript")
 
 def requestSharing(request):
@@ -62,6 +69,7 @@ def send_to_topic(topic_name):
         data={
             'score': '850',
             'time': '2:45',
+            'session_id': topic_name,
         },
         topic=topic,
     )
