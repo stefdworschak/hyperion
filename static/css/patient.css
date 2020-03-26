@@ -1,0 +1,36 @@
+.patient_container {
+    margin-top:20px;
+
+}
+
+.patient_container > div > div > div > div > div {
+    padding-left:10px;
+    padding-right:10px;
+    padding-bottom:20px;
+}
+
+.patient_container > div > div > div > div > div > div {
+    /*padding:20px;*/
+    height:100%;
+}
+
+.card {
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+    transition: 0.3s;
+  }
+  
+.card:hover {
+    box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
+    cursor:pointer;
+}
+
+.card-header{
+    font-weight: bold;
+}
+
+span.add_btn {
+    float:right;
+}
+div.overflow_hidden{
+    overflow:hidden;
+}

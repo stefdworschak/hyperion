@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block content %}
+
+<script>
+    $(document).ready(function(){
+        let $toggle = $('.card-record-toggle');
+        let $add_record = $('#new_patient_record');
+
+        $add_record.click(function(){
+            console.log($toggle)
+            $toggle.animate({height:'0px', padding:'0px'})
+            $toggle.addClass('overflow_hidden');
+        })
+    })
+</script>
+
+<div class="container-fluid patient_container">
+    <div class="row">
+        <div class="col-12">
+
+            <div class="container">
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <i class="far fa-hospital"></i> Session Details
+                            </div>
+                            <div class="card-body card-record-toggle">
+                                <strong>Session Start:</strong> {{ session.session_checkin }} /
+                                <strong>Session Start:</strong> {{ session.session_id }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12 col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <i class="fas fa-user-injured"></i> Patient Information
+                            </div>
+                            <div class="card-body card-record-toggle">
+                                <strong>Patient Name:</strong> Christopher Columbus
+                            </div>
+                            
+                        </div>
+                    </div>
+                    <div class="col-sm-12 col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <i class="fas fa-list-ul"></i> Triage Information
+                            </div>
+                            <div class="card-body card-record-toggle">
+                                <strong>Symtoms:</strong> {{ session.session_details.symptoms }} <br />
+                                <strong>Symtoms Duration:</strong> {{ session.session_details.symptom_duration }} <br />
+                                <strong>Pre-Existing Conditions:</strong> {{ session.session_details.pre_conditions }} <br />
+                                <strong>Pain Scale:</strong> {{ session.session_details.pain_scale }} <br />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+
+                    <div class="col-sm-12 col-md-9">
+                        <div class="card">
+                            <div class="card-header">
+                                <i class="fas fa-file-medical-alt"></i> Patient Records
+                                <span class="add_btn">
+                                    <button class="btn btn-primary btn-sm" id="new_patient_record">
+                                        <i class="fas fa-plus-circle"></i>
+                                        New
+                                    </button>
+                                </span>
+                            </div>
+                            <div class="card-body">
+                                No Records found.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-12 col-md-3">
+                        <div class="card">
+                            <div class="card-header">
+                                <i class="far fa-calendar-alt"></i> Appointments
+                                <span class="add_btn">
+                                    <button class="btn btn-primary btn-sm" id="new_patient_appointment">
+                                        <i class="fas fa-plus-circle"></i>
+                                        New
+                                    </button>
+                                </span>
+                                
+                            </div>
+                            <div class="card-body">
+                                No Records found.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}

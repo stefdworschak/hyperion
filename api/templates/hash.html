@@ -1,0 +1,9 @@
+
+<form method="POST" action="/api/hash_string" enctype="multipart/form-data">
+    {% csrf_token %}
+    <textarea name="hash_string"></textarea>
+    <br />
+    <input type="file" name="hash_file" />
+    <br />
+    <input type="submit" value="Hash String" />
+</form>

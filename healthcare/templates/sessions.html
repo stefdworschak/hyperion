@@ -55,8 +55,10 @@
                                 break;
                             case '2':
                                 button_template = `
-                                    <a href="#" class="btn btn-success" 
-                                    data-session-id=${ doc.session_id }>Data Shared</a>`;
+                                        <form action="/hp/patient/${ doc.session_id }" method="GET">
+                                            <!--<input type="hidden" value="${ doc.session_id }" name="session_id" />-->
+                                            <button type="submit" class="btn btn-success">Data Shared</button>
+                                        </form>`;
                                 break;
                             default:
                                 button_template = `
@@ -102,25 +104,34 @@
         updateData();
 
         function requestSharing(){
+            
+            var $element = $(this);
+            $element.prop('disabled',true);
+            const sid = $element.attr('data-session-id');
 
-            $(this).prop('disabled',true);
-
-
-            const sid = $(this).attr('data-session-id');
-            $.ajax({
-                method:'POST',
-                url:'sharing/',
-                data:{
-                    session_id: sid,
-                    session_shared: 1
-                },
-                success:function(res){
-                    console.log(res);
-                },
-                failure:function(err){
-                    console.log(err);
-                }
-            })
+            try{
+                $.ajax({
+                    method:'POST',
+                    url:'sharing/',
+                    dataType: 'json',
+                    data:{
+                        'session_id': sid,
+                        'session_shared': 1
+                    },
+                    success: function(res){
+                        let button_template = `
+                            <a href="#" class="btn btn-primary disabled" 
+                            data-session-id=${ doc.session_id }>Waiting For Access</a>`;
+                        $element.replaceWith($(button_template));
+                    },
+                    failure: function(err){
+                        console.log(err);
+                    }
+                })
+            } catch(error){
+                console.log('Ajax Error: ' + error)
+            }
+            
         }
     })
 

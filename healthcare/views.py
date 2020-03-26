@@ -6,8 +6,7 @@ import os
 import requests
 
 from django.http import HttpResponse
-from django.shortcuts import render
-
+from django.shortcuts import render, redirect
 
 # Most from firebase documentation
 # https://firebase.google.com/docs/firestore/query-data/get-data
@@ -20,6 +19,8 @@ from firebase_admin.messaging import (Message, Notification, send)
 
 FCM_URL = os.environ.get('FCM_URL')
 FCM_SCOPES = list(os.environ.get('FCM_SCOPES'))
+DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
+
 
 # Create your views here.
 def index(request):
@@ -29,30 +30,49 @@ def index(request):
     doc_list = []
     for doc in docs:
         d = doc.to_dict() 
-        d['session_checkin'] = d['session_checkin'].strftime('%Y-%m-%d %H:%M:%S')
+        d['session_checkin'] = d['session_checkin'].strftime(DATE_FORMAT)
         doc_list.append(d)
-    doc_list = sorted(doc_list, key=lambda x: x['session_checkin'], reverse = True) 
-    return render(request, "sessions.html", { 'docs' : doc_list })
+    doc_list = sorted(doc_list, key=lambda x: x['session_checkin'], 
+                      reverse = True) 
+    return render(request, 'sessions.html', { 'docs' : doc_list })
 
-def updateData(request):
+
+def view_patient(request, id):
+    fire = fb.Firebase('hp')
+    user_session = fire.findSession(id)
+    if user_session is None:
+        return render(request, 'wrong_session.html', {'session_id' : id})
+    return render(request, 'patient.html', { 'session': user_session })
+
+
+def hp_handle_404(request, exception):
+    return render(request, '404.html', {'path' : request.build_absolute_uri()})
+
+# Supporting Functions
+def update_data(request):
     fire = fb.Firebase('hp')
     sessions = fire.openSessions()
     docs = sessions.stream()
     doc_list = []
     for doc in docs:
         d = doc.to_dict() 
-        d['session_checkin'] = d['session_checkin'].strftime('%Y-%m-%d %H:%M:%S')
+        d['session_checkin'] = d['session_checkin'].strftime(DATE_FORMAT)
         doc_list.append(d)
-    doc_list = sorted(doc_list, key=lambda x: x['session_checkin'], reverse = True)
-    return HttpResponse(json.dumps(doc_list, default=json_util.default), content_type="application/javascript")
+    doc_list = sorted(doc_list, key=lambda x: x['session_checkin'], 
+                      reverse = True)
+    return HttpResponse(json.dumps(doc_list, default=json_util.default), 
+                        content_type='application/javascript')
 
-def requestSharing(request):
+
+def request_sharing(request):
     fire = fb.Firebase('sharing_request')
     session = request.POST
     updates = fire.updateSession(session).to_dict()
-    updates['session_checkin'] = updates['session_checkin'].strftime('%Y-%m-%d %H:%M:%S')
+    updates['session_checkin'] = updates['session_checkin'].strftime(
+        DATE_FORMAT)
     send_to_topic(updates['session_id'])
-    return HttpResponse(json.dumps(updates, default=json_util.default), content_type="application/javascript")
+    return HttpResponse(json.dumps(updates, default=json_util.default), 
+                                   content_type='application/javascript')
 
 def send_to_topic(topic_name):
     # [START send_to_topic]
@@ -61,11 +81,6 @@ def send_to_topic(topic_name):
 
     # See documentation on defining a message payload.
     message = Message(
-        notification=Notification(
-            title="HYPERION PERMISSION SHARE", 
-            body="Do you want to give permission to share your information?",
-            image=""
-            ),
         data={
             'score': '850',
             'time': '2:45',
