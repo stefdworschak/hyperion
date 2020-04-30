@@ -91,10 +91,6 @@ DATABASES = {
     }
 }
 
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
-]
-
 
 # Password validation
 # https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators
@@ -114,7 +110,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/2.2/topics/i18n/
 
@@ -133,10 +128,13 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, "static/")
+#STATIC_ROOT = os.path.join(BASE_DIR, "static/")
+STATICFILES_DIRS = [
+    'static/'
+]
 
 # Define all env vars
 FCM_URL = os.environ.get('FCM_URL', 'No value set')
 FCM_URL = os.environ.get('FCM_SCOPES', 'No value set')
-FCM_CREDENTIALS = os.path.join(os.getcwd(),'modules', 
+FCM_CREDENTIALS = os.path.join(BASE_DIR, 'modules', 
                               os.environ.get('FCM_CREDENTIALS','No value set'))

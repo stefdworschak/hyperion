@@ -1,18 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
+{% load static %}
+{% load tags %}
 
-<script>
-    $(document).ready(function(){
-        let $toggle = $('.card-record-toggle');
-        let $add_record = $('#new_patient_record');
-
-        $add_record.click(function(){
-            console.log($toggle)
-            $toggle.animate({height:'0px', padding:'0px'})
-            $toggle.addClass('overflow_hidden');
-        })
-    })
-</script>
+<script src="{% static 'js/patient.js' %}"></script>
 
 <div class="container-fluid patient_container">
     <div class="row">
@@ -27,7 +18,7 @@
                             </div>
                             <div class="card-body card-record-toggle">
                                 <strong>Session Start:</strong> {{ session.session_checkin }} /
-                                <strong>Session Start:</strong> {{ session.session_id }}
+                                <strong>Session ID:</strong> {{ session.session_id }}
                             </div>
                         </div>
                     </div>
@@ -39,7 +30,27 @@
                                 <i class="fas fa-user-injured"></i> Patient Information
                             </div>
                             <div class="card-body card-record-toggle">
-                                <strong>Patient Name:</strong> Christopher Columbus
+                                <ul clas="patient-details">
+                                    <li>
+                                        <strong>Patient Name:</strong> {{ patient.name }}
+                                    </li>
+                                    <li>
+                                        <strong>Address 1:</strong> {{ patient.address }}
+                                    </li>
+                                    <li>
+                                        <strong>Address 2:</strong> {{ patient.address2 }}
+                                    </li>
+                                    <li>
+                                        <strong>City/Post Code:</strong> {{ patient.city }}, {{ patient.postCode }}
+                                    </li>
+                                    <li>
+                                        <strong>PPS:</strong> {{ patient.PPSNumber }}
+                                    </li>
+                                    <li>
+                                        <strong>Registered GP:</strong> {{ patient.registeredGP }}
+                                    </li>
+                                </ul>
+                               
                             </div>
                             
                         </div>
@@ -51,7 +62,7 @@
                             </div>
                             <div class="card-body card-record-toggle">
                                 <strong>Symtoms:</strong> {{ session.session_details.symptoms }} <br />
-                                <strong>Symtoms Duration:</strong> {{ session.session_details.symptom_duration }} <br />
+                                <strong>Symtoms Duration:</strong> {{ session.session_details.symptoms_duration }} <br />
                                 <strong>Pre-Existing Conditions:</strong> {{ session.session_details.pre_conditions }} <br />
                                 <strong>Pain Scale:</strong> {{ session.session_details.pain_scale }} <br />
                             </div>
@@ -63,6 +74,7 @@
 
                     <div class="col-sm-12 col-md-9">
                         <div class="card">
+
                             <div class="card-header">
                                 <i class="fas fa-file-medical-alt"></i> Patient Records
                                 <span class="add_btn">
@@ -72,8 +84,30 @@
                                     </button>
                                 </span>
                             </div>
+
                             <div class="card-body">
-                                No Records found.
+                                <div class="row">
+
+                                    <div class="col-3 session-list">
+                                        {% if patient.patientSessions|length == 0 %}
+                                            No Previous sessions found.
+                                        {% else%}
+                                            <ul>
+                                                {% for session in patient.patientSessions %}
+                                                        <li class="{% if forloop.first %} active{% endif %}">
+                                                            <a class="session-list-link" role="button" data-id="{{session.session_id}}">
+                                                            {{ session.session_checkin|format_date }}</a>
+                                                        </li>
+                                                {%  endfor %}
+                                            </ul>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-9 session-view">
+                                        <!-- Add prev sessions here -->
+                                        {% include '_new_record.html' %}
+                                    </div>
+
+                                </div>                                
                             </div>
                         </div>
                     </div>
@@ -90,8 +124,22 @@
                                 </span>
                                 
                             </div>
+                            
                             <div class="card-body">
-                                No Records found.
+                                <div>
+                                    <form action="/api/create_document" method="POST">
+                                        <div class="form-group">
+                                            <label>Session Information</label>
+                                            <textarea name="document_content" class="form-input"></textarea>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Patient Visible Content</label>
+                                            <textarea name="patient_content" class="form-input"></textarea>
+                                        </div>
+                                        <button class="btn btn-primary">Submit</button>
+                                    </form>
+                                </div>
+
                             </div>
                         </div>
                     </div>
@@ -101,5 +149,7 @@
         </div>
     </div>
 </div>
+
+{{patient}}
 
 {% endblock %}
