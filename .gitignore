@@ -5,3 +5,4 @@ static/fontawesome
 static/documents
 db.sqlite3
 data.txt
+Pipfile
