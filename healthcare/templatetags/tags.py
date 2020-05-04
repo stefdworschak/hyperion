@@ -13,4 +13,7 @@ def get(value):
 
 @register.filter
 def format_date(date):
-    return parse(date).strftime("%a, %b. %d %y")
+    try:
+        return parse(date).strftime("%a, %b. %d %y")
+    except:
+        return date

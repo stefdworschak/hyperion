@@ -69,7 +69,7 @@ def retrieve_encrypted_data(data_key):
         mydb = myclient["hyperion"]
         mycol = mydb["hyperion_auth"]
         record = mycol.find_one({"owner_id":data_key})
-        return record['key'].replace("\n","")
+        return record['data'].replace("\n","")
     except Exception as e:
         print("An error occurred", e)
     return encrypted_data

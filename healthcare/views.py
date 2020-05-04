@@ -92,7 +92,7 @@ def view_patient(request, id):
 
     decrypted_data['patientSessions'] = replace_current_and_order_desc(
         decrypted_data.get('patientSessions'), user_session)
-
+    print(decrypted_data)
     documents = []
     #for s in decrypted_data.get('patientSessions'):
     #    for _k, _s in s.items():
