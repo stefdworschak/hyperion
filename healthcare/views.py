@@ -23,8 +23,7 @@ from modules.decrypter import retrieve_encrypted_data, decrypt_to_dict
 FCM_URL = os.environ.get('FCM_URL')
 FCM_SCOPES = list(os.environ.get('FCM_SCOPES'))
 DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
-#CONTRACT_ENDPOINT = "http://raspberrypi:8080/api"
-CONTRACT_ENDPOINT = "http://192.168.1.219:8080/api"
+CONTRACT_ENDPOINT = os.environ.get('CONTRACT_ENDPOINT')
 
 # Create your views here.
 def index(request):
