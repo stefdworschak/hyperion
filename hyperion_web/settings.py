@@ -131,10 +131,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 STATIC_URL = '/static/'
-#STATIC_ROOT = os.path.join(BASE_DIR, "static/")
-STATICFILES_DIRS = [
-    'static/'
-]
+STATIC_ROOT = os.path.join(BASE_DIR, "static/")
+#STATICFILES_DIRS = [
+#    'static/'
+#]
 
 # Define all env vars
 FCM_URL = os.environ.get('FCM_URL', 'No value set')
