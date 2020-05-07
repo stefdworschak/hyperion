@@ -132,9 +132,9 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, "static/")
-#STATICFILES_DIRS = [
-#    'static/'
-#]
+STATICFILES_DIRS = [
+    STATIC_ROOT
+]
 
 # Define all env vars
 FCM_URL = os.environ.get('FCM_URL', 'No value set')
