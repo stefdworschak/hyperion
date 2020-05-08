@@ -38,6 +38,12 @@ def validate_hashes(request):
         data = json.loads(request.POST.get("data"))
         print("POST DATA")
         print(data)
+        print("data_key")
+        print(data['data_key'])
+        print("hashes")
+        print(data['hashes'])
+        print("action")
+        print(data['action'])
         contract_response = None
         contract_response = contract_interaction(data['data_key'], data['hashes'], data['action'])
         if contract_response is None:
