@@ -34,12 +34,16 @@ def validate_hashes(request):
     hashes = []
     try:
         data = json.loads(request.POST.get("data"))
+        print("POST DATA")
+        print(data)
         contract_response = None
         contract_response = contract_interaction(data['data_key'], data['hashes'], data['action'])
         if contract_response is None:
+            print("CONTRACT RESPONSE NONE")
             return JsonResponse({"status":505, "data":None})
         return JsonResponse({"status":200, "data":contract_response})
     except:
+        print("WRONG DATA PROVIDED")
         return JsonResponse({"status":505, "data":None})
 
 def create_document(request):
