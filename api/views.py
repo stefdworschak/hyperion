@@ -32,6 +32,8 @@ APP = firebase_admin.initialize_app(cred, {
 @csrf_exempt
 def validate_hashes(request):
     hashes = []
+    print(request.POST)
+    print(request.POST.get("data"))
     try:
         data = json.loads(request.POST.get("data"))
         print("POST DATA")
