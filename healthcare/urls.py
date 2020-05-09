@@ -4,7 +4,7 @@ from django.conf.urls import handler404, handler500
 from . import views
 
 urlpatterns = [
-    path('', views.index, name='index'),
+    path('', views.index, name='sessions_index'),
     path('scheduled', views.scheduled, name='scheduled'),
     path('update/', views.update_data, name='update'),
     path('sharing/', views.request_sharing, name='sharing'),

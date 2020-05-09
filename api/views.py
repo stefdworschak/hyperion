@@ -111,7 +111,7 @@ def create_document(request):
     if not request.session.get(data.get('session_id')):
         request.session[data.get('session_id')] = {}
     request.session[data.get('session_id')].update({"documents": file_hashes})
-    return redirect(f"/hp/patient/{data.get('session_id')}")
+    return redirect(f"/sessions/patient/{data.get('session_id')}")
 
 def hash_and_store_file(byte_object, extension, attachment=False):
     if not attachment:

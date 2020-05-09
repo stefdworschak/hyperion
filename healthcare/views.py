@@ -12,6 +12,7 @@ from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
+from django.contrib.auth.decorators import login_required
 
 # Most from firebase documentation
 # https://firebase.google.com/docs/firestore/query-data/get-data
@@ -34,16 +35,19 @@ FIRE = fb.Firebase('hp')
 ########################
 # Views #
 ########################
+@login_required(redirect_field_name=None, login_url='/')
 def index(request):
     """ List all ongoing sessions """
     session_list = list_sessions()
     return render(request, 'sessions.html', { 'sessions' : session_list })
 
+@login_required(redirect_field_name=None, login_url='/')
 def scheduled(request):
     """ List all ongoing sessions """
     session_list = list_sessions(order='asc')
     return render(request, 'scheduled.html', { 'sessions' : session_list })
 
+@login_required(redirect_field_name=None, login_url='/')
 def view_patient(request, session_id):
     """ View the patient """
     error = ""
@@ -92,7 +96,7 @@ def view_patient(request, session_id):
 
         })
 
-
+@login_required(redirect_field_name=None, login_url='/')
 def end_session(request, session_id):
     session = {
             "session_id": session_id,
@@ -102,7 +106,7 @@ def end_session(request, session_id):
     del request.session[session_id]
     return redirect('/hp')
 
-
+@login_required(redirect_field_name=None, login_url='/')
 def create_session(request):
     previous_page = request.META['HTTP_REFERER']
     if request.POST == None:
@@ -142,7 +146,7 @@ def create_session(request):
         new_session_json = json.dumps(new_session, sort_keys=True, indent=1,
                                         cls=DjangoJSONEncoder)
         send_to_topic(session_id, new_session_json, 
-                    "New Session")
+                    "New Session", session_updates.get('data_key'))
         if not request.session.get(session_id):
             request.session[session_id] = {}
         if not request.session[session_id].get('followup_sessions'):
@@ -157,14 +161,15 @@ def create_session(request):
 def hp_handle_404(request, exception):
     return render(request, '404.html', {'path' : request.build_absolute_uri()})
 
-
+@login_required(redirect_field_name=None, login_url='/')
 def update_data(request):
-    order = json.loads(request.POST).get('order')
+    order = request.POST.get('order')
+    print(order)
     session_list = list_sessions(order)
     return HttpResponse(json.dumps(session_list, default=json_util.default), 
                         content_type='application/javascript')
 
-
+@login_required(redirect_field_name=None, login_url='/')
 def request_sharing(request):
     fire = fb.Firebase('sharing_request')
     session = request.POST
@@ -222,7 +227,7 @@ def sort_sessions(d):
     return -d['session_shared']
 
 
-def send_to_topic(topic_name, session_shared, session_documents):
+def send_to_topic(topic_name, session_shared, session_documents, user_id=""):
     # The topic name can be optionally prefixed with "/topics/".
     topic = topic_name
     # See documentation on defining a message payload.
@@ -231,6 +236,7 @@ def send_to_topic(topic_name, session_shared, session_documents):
             'session_id': topic_name,
             'session_shared': session_shared,
             'session_documents': json.dumps(session_documents),
+            'user_id': user_id,
         },
         topic=topic,
     )

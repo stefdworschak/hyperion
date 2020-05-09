@@ -58,7 +58,7 @@
                                 break;
                             case '2':
                                 button_template = `
-                                        <form action="/hp/patient/${ session.session_id }" method="GET">
+                                        <form action="/sessions/patient/${ session.session_id }" method="GET">
                                             <!--<input type="hidden" value="${ session.session_id }" name="session_id" />-->
                                             <button type="submit" class="btn btn-success">Data Shared</button>
                                         </form>`;
@@ -172,7 +172,7 @@
                             <a href="#" class="btn btn-primary disabled" 
                             data-session-id={{session.session_id}}>Waiting For Access</a>
                         {% elif  session.session_shared|make_int == 2 %}
-                            <form action="/hp/patient/{{session.session_id}}" method="GET">
+                            <form action="/sessions/patient/{{session.session_id}}" method="GET">
                                 <button type="submit" class="btn btn-success">Data Shared</button>
                             </form>
                         {% endif %}

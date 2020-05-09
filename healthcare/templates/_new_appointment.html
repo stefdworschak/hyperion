@@ -1,5 +1,5 @@
 <div class="add-new-patient-appointment">   
-    <form id="createDocumentForm" action="/hp/create_session" method="POST" enctype="multipart/form-data">
+    <form id="createDocumentForm" action="/sessions/create_session" method="POST" enctype="multipart/form-data">
         {% csrf_token %}
         <input type="hidden" name="session_id" value="{{session.session_id}}" />
         <input type="hidden" name="data_key" value="{{session.data_key}}" />
