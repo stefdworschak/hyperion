@@ -31,8 +31,13 @@ class Firebase:
         return True
 
 
-    def openSessions(self):
-        users_ref = self.db.collection(u'checkins')
+    def openSessions(self, order='desc'):
+        if order == 'desc':
+            sort_by_direction = firestore.Query.DESCENDING
+        else:
+            sort_by_direction = firestore.Query.ASCENDING
+        users_ref = self.db.collection(u'checkins').order_by(
+            u'session_checkin', direction=sort_by_direction)
         return users_ref
 
 

@@ -104,7 +104,8 @@ def create_document(request):
     else:
         session = {
             "session_id": data.get('session_id'),
-            "session_documents": file_hashes
+            "session_documents": file_hashes,
+            "session_content": d,
         }
         updates = FIRE.updateSession(session).to_dict()
     if not request.session.get(data.get('session_id')):

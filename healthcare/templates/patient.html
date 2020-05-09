@@ -96,17 +96,23 @@
                             </div>
                             
                             <div class="card-body session-list">
-                                {{ followup_session }}
+                                
                                 {% include '_new_appointment.html' %}
                                 {% if patient.patientSessions|length == 0 %}
                                     No Previous sessions found.
                                 {% else%}
                                     <ul>
+                                        {% for followup in followup_sessions %}
+                                        <li>
+                                            <a class="session-list-link" role="button" data-id="{{followup.session_id}}">
+                                            {{ followup.session_checkin|format_date }} ({{ followup.session_documents|length }}) - Scheduled</a>
+                                        </li>
+                                        {% endfor %}
                                         {% for session in patient.patientSessions %}
-                                                <li class="{% if forloop.first %}active-session-link{% endif %}">
-                                                    <a class="session-list-link" role="button" data-id="{{session.session_id}}">
-                                                    {{ session.session_checkin|format_date }} ({{ session.session_documents|length }}) {% if forloop.first %}- Current{% endif %}</a>
-                                                </li>
+                                        <li class="{% if forloop.first %}active-session-link{% endif %}">
+                                            <a class="session-list-link" role="button" data-id="{{session.session_id}}">
+                                            {{ session.session_checkin|format_date }} ({{ session.session_documents|length }}) {% if forloop.first %}- Current{% endif %}</a>
+                                        </li>
                                         {%  endfor %}
                                     </ul>
                                 {% endif %}

@@ -25,7 +25,7 @@ TEMPLATES_DIR = os.path.join(BASE_DIR, 'templates')
 SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 EC2_HOSTNAME = os.environ.get('EC2_HOSTNAME')
 
@@ -137,7 +137,6 @@ print(STATIC_ROOT)
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR,"static/")
 ]
-#STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Define all env vars
 FCM_URL = os.environ.get('FCM_URL', 'No value set')

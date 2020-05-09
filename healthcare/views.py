@@ -36,25 +36,21 @@ FIRE = fb.Firebase('hp')
 ########################
 def index(request):
     """ List all ongoing sessions """
-    sessions = FIRE.openSessions()
-    docs = sessions.stream()
-    doc_list = []
-    for doc in docs:
-        d = doc.to_dict() 
-        d['session_checkin'] = d['session_checkin'].strftime(DATE_FORMAT)
-        doc_list.append(d)
-    doc_list = sorted(doc_list, key=lambda x: x['session_checkin'], 
-                      reverse = True) 
-    return render(request, 'sessions.html', { 'docs' : doc_list })
+    session_list = list_sessions()
+    return render(request, 'sessions.html', { 'sessions' : session_list })
 
+def scheduled(request):
+    """ List all ongoing sessions """
+    session_list = list_sessions(order='asc')
+    return render(request, 'scheduled.html', { 'sessions' : session_list })
 
 def view_patient(request, session_id):
     """ View the patient """
     error = ""
-    followup_session = []
+    followup_sessions = []
     files_complete = 0
     req_session = {}
-    user_session = fire.findSession(session_id)
+    user_session = FIRE.findSession(session_id)
 
     if user_session is None:
         return render(request, 'wrong_session.html', {'session_id' : session_id})
@@ -65,7 +61,13 @@ def view_patient(request, session_id):
         req_session.setdefault('complete_files', 0)
         if req_session.get('documents'):
             request.session[session_id]['complete_files'] += 1
-        if req_session.get("followup_session"):
+        if req_session.get("followup_sessions"):
+            req_followups = []
+            for followup in req_session.get("followup_sessions"): 
+                followup = json.loads(followup)
+                followup["followup_session"] = str(
+                    followup.get('session_checkin'))
+                followup_sessions.append(followup)
             request.session[session_id]['complete_files'] += 1
 
     encrypted_data = retrieve_encrypted_data(user_session.get('data_key'))
@@ -86,11 +88,17 @@ def view_patient(request, session_id):
          'documents': documents,
          'current_session_documents': req_session.get('documents'),
          'tomorrow': (date.today() + timedelta(days=1)).strftime('%Y-%m-%d'),
-         'followup_session': req_session.get('followup_session'),
+         'followup_sessions': followup_sessions,
+
         })
 
-def end_session(request, session_id):
 
+def end_session(request, session_id):
+    session = {
+            "session_id": session_id,
+            "session_shared": 3
+    }
+    session_updates = FIRE.updateSession(session).to_dict()
     del request.session[session_id]
     return redirect('/hp')
 
@@ -111,12 +119,12 @@ def create_session(request):
         new_session = {
             "session_id": new_session_id,
             "session_shared": 0,
-            "session_checkin": str(d),
+            "session_checkin": d,
             "session_details": {
-                "pain_scale": None,
-                "pre_conditions": None,
-                "symptoms": None,
-                "symptoms_duration": None
+                "pain_scale": "",
+                "pre_conditions": "",
+                "symptoms": "",
+                "symptoms_duration": ""
             },
             "session_documents": []
         }
@@ -131,19 +139,59 @@ def create_session(request):
         }
         session_updates = FIRE.updateSession(session).to_dict()
         messages.success(request, "Session with ID " + new_session_id + " created")
-        #send_to_topic(new_session_updates['session_id'], new_session_updates['session_shared'], 
-        #            new_session_updates['session_documents'])
+        new_session_json = json.dumps(new_session, sort_keys=True, indent=1,
+                                        cls=DjangoJSONEncoder)
+        send_to_topic(session_id, new_session_json, 
+                    "New Session")
         if not request.session.get(session_id):
             request.session[session_id] = {}
-        request.session[session_id].update({'followup_session': json.dumps(new_session)})
+        if not request.session[session_id].get('followup_sessions'):
+            print("FOLLOW UP SESSIONS")
+            request.session[session_id].setdefault('followup_sessions',[])
+        #new_session['session_checkin'] = new_session['session_checkin'].strftime(DATE_FORMAT)
+        #print(new_session)
+        request.session[session_id]['followup_sessions'].append(new_session_json)
         return redirect(previous_page)
 
 
+def hp_handle_404(request, exception):
+    return render(request, '404.html', {'path' : request.build_absolute_uri()})
+
+
+def update_data(request):
+    order = json.loads(request.POST).get('order')
+    session_list = list_sessions(order)
+    return HttpResponse(json.dumps(session_list, default=json_util.default), 
+                        content_type='application/javascript')
+
+
+def request_sharing(request):
+    fire = fb.Firebase('sharing_request')
+    session = request.POST
+    updates = FIRE.updateSession(session).to_dict()
+    updates['session_checkin'] = updates['session_checkin'].strftime(
+        DATE_FORMAT)
+    send_to_topic(updates['session_id'], updates['session_shared'], 
+                  updates['session_documents'])
+    return HttpResponse(json.dumps(updates, default=json_util.default), 
+                                   content_type='application/javascript')
 
 
 ########################
 # Supporting Functions #
 ########################
+def list_sessions(order='desc'):
+    sessions = FIRE.openSessions(order=order)
+    docs = sessions.stream()
+    doc_list = []
+    for doc in docs:
+        d = doc.to_dict() 
+        if isinstance(d['session_checkin'], datetime):
+            d['session_checkin'] = d['session_checkin'].strftime(DATE_FORMAT)
+        doc_list.append(d)
+    return doc_list
+
+
 def add_download_links(sessions):
     for session in sessions:
         documents = session.get('session_documents')
@@ -173,35 +221,6 @@ def replace_current_and_order_desc(sessions, user_session):
 def sort_sessions(d):
     return -d['session_shared']
 
-
-def hp_handle_404(request, exception):
-    return render(request, '404.html', {'path' : request.build_absolute_uri()})
-
-
-def update_data(request):
-    sessions = FIRE.openSessions()
-    docs = sessions.stream()
-    doc_list = []
-    for doc in docs:
-        d = doc.to_dict() 
-        d['session_checkin'] = d['session_checkin'].strftime(DATE_FORMAT)
-        doc_list.append(d)
-    doc_list = sorted(doc_list, key=lambda x: x['session_checkin'], 
-                      reverse = True)
-    return HttpResponse(json.dumps(doc_list, default=json_util.default), 
-                        content_type='application/javascript')
-
-
-def request_sharing(request):
-    fire = fb.Firebase('sharing_request')
-    session = request.POST
-    updates = FIRE.updateSession(session).to_dict()
-    updates['session_checkin'] = updates['session_checkin'].strftime(
-        DATE_FORMAT)
-    send_to_topic(updates['session_id'], updates['session_shared'], 
-                  updates['session_documents'])
-    return HttpResponse(json.dumps(updates, default=json_util.default), 
-                                   content_type='application/javascript')
 
 def send_to_topic(topic_name, session_shared, session_documents):
     # The topic name can be optionally prefixed with "/topics/".
