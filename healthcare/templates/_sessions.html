@@ -1,29 +1,69 @@
+
 {% for session in patient.patientSessions %}
+    <div class="{% if not forloop.first %}in{% endif %}active-session-card session_{{session.session_id}}">
+        <div>
+            <h5>Triage Info</h5>
+            <p>
+                <strong>Symtoms:</strong> {{ session.session_details.symptoms }} <br />
+                <strong>Symtoms Duration:</strong> {{ session.session_details.symptoms_duration }} <br />
+                <strong>Pre-Existing Conditions:</strong> {{ session.session_details.pre_conditions }} <br />
+                <strong>Pain Scale:</strong> {{ session.session_details.pain_scale }}
+            </p>
+        </div>
     {% if session.session_documents|length > 0 %}
-        <div class="{% if not forloop.first %}in{% endif %}active-session-card">
+ 
         {% for document in session.session_documents %}
             {% if document.document_name == "Session Record" and document.content != None %}
+                <div>
+                    <h5>Session Information</h5>
+                    <p class="">{{document.content.document_content}}</p>
+                </div>
                 
-                <h5>Session Information</h5>
-                <p class="">{{document.content.document_content}}</p>
+                <div>
+                    <h5>Diagnosis (patient visible)</h5>
+                    <p class="">{{document.content.patient_diagnosis}}</p>
+                </div>
 
-                <h5>Diagnosis (patient visible)</h5>
-                <p class="">{{document.content.patient_diagnosis}}</p>
-
-                <h5>Patient Recommendation</h5>
-                <p class="">{{document.content.patient_recommendation}}</p>
-
-                <h5>Attachments</h5>
-               
-            {% else %}
-                <a href="{{document.download_link}}" target="_blank" download>{{document.document_name}}{{document.document_type}}</a><br />
-            {% endif %}
+                <div>
+                    <h5>Patient Recommendation</h5>
+                    <p class="">{{document.content.patient_recommendation}}</p>
+                </div>
+                
+                             
+                {% else %}
+                <div>
+                    <h5>Attachments</h5> 
+                    {% if session.session_documents|length > 1 %}
+                    <a href="{{document.download_link}}" target="_blank" download>{{document.document_name}}{{document.document_type}}</a><br />
+                    {% else %}
+                        No attachements available.
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+        
         {% endfor %}
-        </div>
-    {% else %}
-    <div class="{% if not forloop.first %}in{% endif %}active-session-card">
-        No Record added for this session.
-    </div> 
-    {% endif %}
 
+    {% else %}
+    <div>
+        <h5>Session Information</h5>
+        <p class="">No information available.</p>
+    </div>
+    
+    <div>
+        <h5>Diagnosis (patient visible)</h5>
+        <p class="">No information available.</p>
+    </div>
+
+    <div>
+        <h5>Patient Recommendation</h5>
+        <p class="">No information available.</p>
+    </div>
+
+    <div>
+        <h5>Attachments</h5>
+        <p class="">No attachments available.</p>
+    </div>
+    {% endif %}
+    </div>
 {% endfor %}

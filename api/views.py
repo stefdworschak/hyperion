@@ -24,38 +24,17 @@ from google.cloud.storage import Blob
 
 from django.views.decorators.csrf import csrf_exempt, csrf_protect
 
+import modules.firebase as fb
+
+
 cred = credentials.Certificate(settings.FCM_CREDENTIALS)
 APP = firebase_admin.initialize_app(cred, { 
     'storageBucket': 'hyperion-260715.appspot.com',
     })
+FIRE = fb.Firebase('hp')
 CONTRACT_ENDPOINT = os.environ.get('CONTRACT_ENDPOINT')
 
 
-def index(request):
-    file_contents = get_download_link("660964f51e097485148acea751f1012a433fdf274789a6a0d20ecf892ffe7bf1",".json")
-    return render(request, 'hash.html', {"file_contents": file_contents})
-
-def hash_string(request):
-    files = request.FILES
-    file_hash = ""
-    if len(files) == 0:
-        sha256 = SHA256.new()
-        sha256.update(b"")
-        file_hash = sha256.hexdigest()
-    else:
-        for file in files:
-            ext = "." + files[file].name.split(".")[-1]
-            file_hash = hash_file(byte_object=files[file],
-                                  extension=ext, attachment=True)
-    return render(request, 'hash_output.html',{'hash_object': file_hash, "count": len(files)})
-
-
-def hash_file(byte_object, extension, attachment=False):
-    sha256 = SHA256.new()
-    sha256.update(byte_object.read())
-    file_hash = sha256.hexdigest()
-    store_file_in_bucket(byte_object.file.getvalue(), file_hash+extension)
-    return file_hash
 
 @csrf_exempt
 def validate_hashes(request):
@@ -112,7 +91,25 @@ def create_document(request):
                 "document_type": ext,
             }
             file_hashes.append(f)
-    request.session[data.get('session_id')] = file_hashes
+
+    # Save hashes on the distributed ledger
+    contract_response = contract_interaction(
+            data_key=data.get('data_key'),
+            hashes=file_hashes,
+            action="addMultiple"
+            )
+
+    if contract_response is None:
+        messages.error(request, "Could add documents to distributed ledger. Please try again or contact your administrator")
+    else:
+        session = {
+            "session_id": data.get('session_id'),
+            "session_documents": file_hashes
+        }
+        updates = FIRE.updateSession(session).to_dict()
+    if not request.session.get(data.get('session_id')):
+        request.session[data.get('session_id')] = {}
+    request.session[data.get('session_id')].update({"documents": file_hashes})
     return redirect(f"/hp/patient/{data.get('session_id')}")
 
 def hash_and_store_file(byte_object, extension, attachment=False):
@@ -174,4 +171,4 @@ def contract_interaction(data_key, hashes, action):
     if resp.status_code == 200:
         return resp.json()
     else:
-        return None
+        return None       

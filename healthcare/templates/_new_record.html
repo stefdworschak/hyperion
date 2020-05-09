@@ -1,4 +1,4 @@
-<div style="display:none">
+<div class="add-new-patient-record">
     <form id="createDocumentForm" action="/api/create_document" method="POST" enctype="multipart/form-data">
         {% csrf_token %}
         <input type="hidden" name="session_id" value="{{session.session_id}}" />
@@ -24,7 +24,11 @@
 <div id="create_document_errors">
     {% if messages %}
         {% for message in messages %}
+            {% if message.tags == 'error' %}
             <div class="alert alert-danger">
+            {% else %}
+            <div class="alert alert-{{message.tags}}">
+            {% endif %}
                 {{message}}
             </div>
         {% endfor %}

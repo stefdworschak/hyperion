@@ -1,14 +1,17 @@
 import argparse
-from datetime import datetime as dt
-import json
 from bson import json_util
+from datetime import datetime, date, timedelta
+from dateutil.parser import parse
+import json
 import os
+from random import randint
 import requests
 
 from django.http import HttpResponse
 from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.conf import settings
+from django.core.serializers.json import DjangoJSONEncoder
 
 # Most from firebase documentation
 # https://firebase.google.com/docs/firestore/query-data/get-data
@@ -25,12 +28,15 @@ from modules.decrypter import retrieve_encrypted_data, decrypt_to_dict
 FCM_URL = os.environ.get('FCM_URL')
 FCM_SCOPES = list(os.environ.get('FCM_SCOPES'))
 DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
+FIRE = fb.Firebase('hp')
 
 
+########################
+# Views #
+########################
 def index(request):
     """ List all ongoing sessions """
-    fire = fb.Firebase('hp')
-    sessions = fire.openSessions()
+    sessions = FIRE.openSessions()
     docs = sessions.stream()
     doc_list = []
     for doc in docs:
@@ -45,30 +51,22 @@ def index(request):
 def view_patient(request, session_id):
     """ View the patient """
     error = ""
-    fire = fb.Firebase('hp')
+    followup_session = []
+    files_complete = 0
+    req_session = {}
     user_session = fire.findSession(session_id)
+
     if user_session is None:
         return render(request, 'wrong_session.html', {'session_id' : session_id})
 
-    # This is set by the api if a new document is created
+    # This is set by the api if a new document or session is created
     if request.session.get(session_id):
-        hashes = request.session.get(session_id)
-        contract_response = contract_interaction(
-            data_key=user_session.get('data_key'),
-            hashes=hashes,
-            action="addMultiple"
-        )
-        if contract_response is None:
-            messages.error(request, "Could add documents to distributed ledger. Please try again or contact your administrator")
-        else:
-            session = {
-                "session_id": session_id,
-                "session_documents": request.session.get(session_id)
-            }
-            updates = fire.updateSession(session).to_dict()
-        
-        del request.session[session_id]
-        request.session.modified = True
+        req_session = request.session.get(session_id)
+        req_session.setdefault('complete_files', 0)
+        if req_session.get('documents'):
+            request.session[session_id]['complete_files'] += 1
+        if req_session.get("followup_session"):
+            request.session[session_id]['complete_files'] += 1
 
     encrypted_data = retrieve_encrypted_data(user_session.get('data_key'))
     if encrypted_data == None:
@@ -82,10 +80,70 @@ def view_patient(request, session_id):
     add_download_links(decrypted_data['patientSessions'])
     print(decrypted_data)
     documents = []
-    return render(request, 'patient.html', {'session': user_session, 
-                                            'patient': decrypted_data,
-                                            'documents': documents, })
+    return render(request, 'patient.html', 
+        {'session': user_session, 
+         'patient': decrypted_data,
+         'documents': documents,
+         'current_session_documents': req_session.get('documents'),
+         'tomorrow': (date.today() + timedelta(days=1)).strftime('%Y-%m-%d'),
+         'followup_session': req_session.get('followup_session'),
+        })
 
+def end_session(request, session_id):
+
+    del request.session[session_id]
+    return redirect('/hp')
+
+
+def create_session(request):
+    previous_page = request.META['HTTP_REFERER']
+    if request.POST == None:
+        messages.error(request, "Missing date and time")
+        return redirect(previous_page)
+    else:
+        session_id = request.POST.get('session_id')
+        session_date = request.POST.get('new_session_date')
+        session_time = request.POST.get('new_session_time')
+        d = parse(f'{session_date} {session_time}')
+        new_session_id = (
+            str(randint(1000000000, 9999999999)) + 
+            str(d.year + d.month + d.day + d.hour + d.minute + d.second))
+        new_session = {
+            "session_id": new_session_id,
+            "session_shared": 0,
+            "session_checkin": str(d),
+            "session_details": {
+                "pain_scale": None,
+                "pre_conditions": None,
+                "symptoms": None,
+                "symptoms_duration": None
+            },
+            "session_documents": []
+        }
+        new_session_updates = FIRE.createSession(new_session).to_dict()
+        session = {
+            "session_id": session_id,
+            "followup_session": {
+                "session_id": new_session_id,
+                "session_checkin": d,
+
+            }
+        }
+        session_updates = FIRE.updateSession(session).to_dict()
+        messages.success(request, "Session with ID " + new_session_id + " created")
+        #send_to_topic(new_session_updates['session_id'], new_session_updates['session_shared'], 
+        #            new_session_updates['session_documents'])
+        if not request.session.get(session_id):
+            request.session[session_id] = {}
+        request.session[session_id].update({'followup_session': json.dumps(new_session)})
+        return redirect(previous_page)
+
+
+
+
+########################
+# Supporting Functions #
+########################
 def add_download_links(sessions):
     for session in sessions:
         documents = session.get('session_documents')
@@ -119,10 +177,9 @@ def sort_sessions(d):
 def hp_handle_404(request, exception):
     return render(request, '404.html', {'path' : request.build_absolute_uri()})
 
-# Supporting Functions
+
 def update_data(request):
-    fire = fb.Firebase('hp')
-    sessions = fire.openSessions()
+    sessions = FIRE.openSessions()
     docs = sessions.stream()
     doc_list = []
     for doc in docs:
@@ -138,7 +195,7 @@ def update_data(request):
 def request_sharing(request):
     fire = fb.Firebase('sharing_request')
     session = request.POST
-    updates = fire.updateSession(session).to_dict()
+    updates = FIRE.updateSession(session).to_dict()
     updates['session_checkin'] = updates['session_checkin'].strftime(
         DATE_FORMAT)
     send_to_topic(updates['session_id'], updates['session_shared'], 

@@ -1,0 +1,17 @@
+<div class="add-new-patient-appointment">   
+    <form id="createDocumentForm" action="/hp/create_session" method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="session_id" value="{{session.session_id}}" />
+        <input type="hidden" name="data_key" value="{{session.data_key}}" />
+        <div class="form-group">
+            <label>Appointment Date</label>
+            <input type="date" name="new_session_date" class="form-control" min="{{ tomorrow }}" required />
+        </div>
+        <div class="form-group">
+            <label>Appointment Date</label>
+            <input type="time" name="new_session_time" class="form-control" required />
+        </div>
+        <button class="btn btn-primary">Save</button>
+    </form>
+</div>
+

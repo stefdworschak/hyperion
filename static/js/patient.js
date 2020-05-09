@@ -5,24 +5,63 @@ $(document).ready(function(){
     $toggle.each(function(i){
         heights.push($(this).height());
     })
-    console.log(heights)
     let $add_record = $('#new_patient_record');
-    let $headers = $('.card-header');
+    let $cancel_add = $('#cancel_new_patient_record');
+    let $add_appointment = $('#new_patient_appointment');
+    let $cancel_add_appointment = $('#cancel_new_patient_appointment');
+
+    let $headers = $('.card-header:not(.add-header)');
 
     $add_record.click(function(){
+        $add_record.hide();
         $toggle.animate({height:'0px', padding:'0px'})
         $toggle.addClass('overflow_hidden');
 
         $headers.click(function(){
-            console.log("Clicked")
-            console.log($toggle.height())
             if($toggle.height() == 0){
                 $toggle.each(function(i){
-                    $(this).animate({height: heights[i]+40+'px', padding: '20px'})
+                    $(this).animate({height: heights[i]+40+'px', padding: '20px'});
                 })
                
             }
         })
+
+        $('.add-new-patient-record').show();
+        $('.card-body.session-list ul li').removeClass('active-session-link');
+        $('.card-body.session-list ul li').first()
+                .addClass('active-session-link');
+        let shown_item = $('.active-session-card');
+        shown_item.removeClass('active-session-card')
+            .addClass('inactive-session-card');
+        $cancel_add.show();
+    })
+
+    $cancel_add.click(function(){
+        let not_shown_item = $('.inactive-session-card');
+        not_shown_item.first().removeClass('inactive-session-card')
+            .addClass('active-session-card');
+        $('.add-new-patient-record').hide();
+        if($toggle.height() == 0){
+            $toggle.each(function(i){
+                $(this).animate({height: heights[i]+40+'px', padding: '20px'});
+            })
+            
+        }
+        $cancel_add.hide();
+        $add_record.show();
+    })
+
+    $add_appointment.click(function(){
+        $add_appointment.hide();
+        $cancel_add_appointment.show()
+        $('.add-new-patient-appointment').show();
+
+    })
+
+    $cancel_add_appointment.click(function(){
+        $cancel_add_appointment.hide();
+        $add_appointment.show();
+        $('.add-new-patient-appointment').hide();
     })
 
     let $file = $('#fileupload');
@@ -57,8 +96,16 @@ $(document).ready(function(){
     })
 
     $('.card-body.session-list ul li').click(function(){
+        $('.add-new-patient-record').hide();
         $('.card-body.session-list ul li').removeClass('active-session-link');
         $(this).addClass('active-session-link');
+        let session_id = $(this).find('a').data('id');
+        let shown_item = $('.active-session-card');
+        shown_item.removeClass('active-session-card')
+            .addClass('inactive-session-card');
+        $(`.session_${session_id}`).removeClass('inactive-session-card')
+            .addClass('active-session-card');
+
     })
 
 })

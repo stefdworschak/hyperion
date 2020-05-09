@@ -44,6 +44,16 @@ class Firebase:
         return updates
         #except Exception as e:
         #    return {}
+
+
+    def createSession(self, session):
+        #try:
+        doc_ref = self.db.collection(u'checkins').document(session['session_id'])
+        doc_ref.set(session)
+        updates = doc_ref.get()
+        return updates
+        #except Exception as e:
+        #    return {}
     
 
     def findSession(self, session_id):

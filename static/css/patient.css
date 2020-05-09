@@ -86,8 +86,31 @@ a.session-list-link:hover {
 
 .active-session-card {
     display: block;
+
+}
+
+.active-session-card div p, .inactive-session-card div p {
+    padding:10px;
+    border: 1px solid lightgray;
+    border-radius: 5px;
+    margin-bottom: 10px;
 }
 
 .inactive-session-card {
     display: none;
+}
+
+.add-new-patient-record, .add-new-patient-appointment {
+    display:none;
+}
+
+#cancel_new_patient_record, #cancel_new_patient_appointment {
+    display:none;
+}
+
+.add-new-patient-appointment {
+    border:1px solid lightgray;
+    border-radius: 5px;
+    margin:10px;
+    padding: 10px;
 }
