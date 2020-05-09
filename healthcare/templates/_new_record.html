@@ -1,4 +1,4 @@
-<div>
+<div style="display:none">
     <form id="createDocumentForm" action="/api/create_document" method="POST" enctype="multipart/form-data">
         {% csrf_token %}
         <input type="hidden" name="session_id" value="{{session.session_id}}" />
@@ -30,8 +30,3 @@
         {% endfor %}
     {% endif %}
 </div>
-{% if documents|length == 0 %}
-    No Records found.
-{% else%}
-
-{% endif %}

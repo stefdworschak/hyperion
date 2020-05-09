@@ -59,7 +59,7 @@ a.session-list-link:hover {
     display: block;
 }
 
-.active {
+.active-session-link {
     background-color: lightgrey;
     font-weight: bold;
 }
@@ -82,4 +82,12 @@ a.session-list-link:hover {
 
 .patient-details li {
 
+}
+
+.active-session-card {
+    display: block;
+}
+
+.inactive-session-card {
+    display: none;
 }

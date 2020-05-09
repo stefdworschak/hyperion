@@ -56,4 +56,9 @@ $(document).ready(function(){
         }
     })
 
+    $('.card-body.session-list ul li').click(function(){
+        $('.card-body.session-list ul li').removeClass('active-session-link');
+        $(this).addClass('active-session-link');
+    })
+
 })

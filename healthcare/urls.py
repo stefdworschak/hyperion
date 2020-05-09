@@ -7,7 +7,7 @@ urlpatterns = [
     path('', views.index, name='index'),
     path('update/', views.update_data, name='update'),
     path('sharing/', views.request_sharing, name='sharing'),
-    path('patient/<int:id>', views.view_patient, name='patient'),
+    path('patient/<str:session_id>', views.view_patient, name='patient'),
 ]
 
 handler404 = 'healthcare.views.hp_handle_404'

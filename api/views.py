@@ -1,6 +1,8 @@
+from datetime import datetime, timedelta
 import io
 import json 
 import os
+import requests
 from uuid import uuid4
 
 from django.shortcuts import render, redirect
@@ -18,9 +20,7 @@ from django.core.files.base import ContentFile
 import firebase_admin
 from firebase_admin import storage
 from firebase_admin import credentials
-
-import tempfile
-from healthcare.views import contract_interaction
+from google.cloud.storage import Blob
 
 from django.views.decorators.csrf import csrf_exempt, csrf_protect
 
@@ -28,30 +28,48 @@ cred = credentials.Certificate(settings.FCM_CREDENTIALS)
 APP = firebase_admin.initialize_app(cred, { 
     'storageBucket': 'hyperion-260715.appspot.com',
     })
+CONTRACT_ENDPOINT = os.environ.get('CONTRACT_ENDPOINT')
+
+
+def index(request):
+    file_contents = get_download_link("660964f51e097485148acea751f1012a433fdf274789a6a0d20ecf892ffe7bf1",".json")
+    return render(request, 'hash.html', {"file_contents": file_contents})
+
+def hash_string(request):
+    files = request.FILES
+    file_hash = ""
+    if len(files) == 0:
+        sha256 = SHA256.new()
+        sha256.update(b"")
+        file_hash = sha256.hexdigest()
+    else:
+        for file in files:
+            ext = "." + files[file].name.split(".")[-1]
+            file_hash = hash_file(byte_object=files[file],
+                                  extension=ext, attachment=True)
+    return render(request, 'hash_output.html',{'hash_object': file_hash, "count": len(files)})
+
+
+def hash_file(byte_object, extension, attachment=False):
+    sha256 = SHA256.new()
+    sha256.update(byte_object.read())
+    file_hash = sha256.hexdigest()
+    store_file_in_bucket(byte_object.file.getvalue(), file_hash+extension)
+    return file_hash
 
 @csrf_exempt
 def validate_hashes(request):
     hashes = []
-    print(request.POST)
-    print(request.POST.get("data"))
     try:
         data = json.loads(request.POST.get("data"))
-        print("POST DATA")
-        print(data)
-        print("data_key")
-        print(data['data_key'])
-        print("hashes")
-        print(data['hashes'])
-        print("action")
-        print(data['action'])
+        if isinstance(data['hashes'], str):
+            data['hashes'] = json.loads(data['hashes'])
         contract_response = None
         contract_response = contract_interaction(data['data_key'], data['hashes'], data['action'])
         if contract_response is None:
-            print("CONTRACT RESPONSE NONE")
             return JsonResponse({"status":505, "data":None})
         return JsonResponse({"status":200, "data":contract_response})
-    except:
-        print("WRONG DATA PROVIDED")
+    except Exception as e:
         return JsonResponse({"status":505, "data":None})
 
 def create_document(request):
@@ -104,7 +122,7 @@ def hash_and_store_file(byte_object, extension, attachment=False):
         print(str(byte_object.decode('utf-8')))
     else:
         file_hash = create_hash_string(byte_object.file.getvalue())
-        store_file_in_bucket(byte_object.read(), file_hash+extension)
+        store_file_in_bucket(byte_object.file.getvalue(), file_hash+extension)
     return file_hash
 
 
@@ -135,3 +153,25 @@ def create_hash_string(byte_object):
     sha256 = SHA256.new()
     sha256.update(byte_object)
     return sha256.hexdigest()
+
+def get_download_link(file_hash, file_type):
+    bucket = storage.bucket(app=APP)
+    blob = bucket.blob(file_hash+file_type)
+
+    expiration = datetime.now() + timedelta(days=1)
+    url = blob.generate_signed_url(expiration=expiration, 
+                                   #bucket_bound_hostname='hyperion-health.net',
+                                    version='v4')
+    return url
+
+def contract_interaction(data_key, hashes, action):
+    data = json.dumps({
+        "user": data_key,
+        "hashes": [h.get('document_hash') for h in hashes],
+        "action": action
+    })
+    resp = requests.post(CONTRACT_ENDPOINT, {"data": data})
+    if resp.status_code == 200:
+        return resp.json()
+    else:
+        return None

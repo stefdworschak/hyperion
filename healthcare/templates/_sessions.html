@@ -1,0 +1,29 @@
+{% for session in patient.patientSessions %}
+    {% if session.session_documents|length > 0 %}
+        <div class="{% if not forloop.first %}in{% endif %}active-session-card">
+        {% for document in session.session_documents %}
+            {% if document.document_name == "Session Record" and document.content != None %}
+                
+                <h5>Session Information</h5>
+                <p class="">{{document.content.document_content}}</p>
+
+                <h5>Diagnosis (patient visible)</h5>
+                <p class="">{{document.content.patient_diagnosis}}</p>
+
+                <h5>Patient Recommendation</h5>
+                <p class="">{{document.content.patient_recommendation}}</p>
+
+                <h5>Attachments</h5>
+               
+            {% else %}
+                <a href="{{document.download_link}}" target="_blank" download>{{document.document_name}}{{document.document_type}}</a><br />
+            {% endif %}
+        {% endfor %}
+        </div>
+    {% else %}
+    <div class="{% if not forloop.first %}in{% endif %}active-session-card">
+        No Record added for this session.
+    </div> 
+    {% endif %}
+
+{% endfor %}

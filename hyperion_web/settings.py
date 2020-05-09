@@ -33,7 +33,8 @@ ALLOWED_HOSTS = [
     'https://hyperion-app.herokuapp.com/',
     'hyperion-app.herokuapp.com',
     'localhost',
-    EC2_HOSTNAME
+    EC2_HOSTNAME, 
+    '99.80.31.136',
     ]
 
 

@@ -72,6 +72,36 @@
 
                 <div class="row">
 
+                    <div class="col-sm-12 col-md-3">
+                        <div class="card">
+                            <div class="card-header">
+                                <i class="far fa-calendar-alt"></i> Appointments
+                                <span class="add_btn">
+                                    <button class="btn btn-primary btn-sm" id="new_patient_appointment">
+                                        <i class="fas fa-plus-circle"></i>
+                                        New
+                                    </button>
+                                </span>
+                                
+                            </div>
+                            
+                            <div class="card-body session-list">
+                                {% if patient.patientSessions|length == 0 %}
+                                    No Previous sessions found.
+                                {% else%}
+                                    <ul>
+                                        {% for session in patient.patientSessions %}
+                                                <li class="{% if forloop.first %}active-session-link{% endif %}">
+                                                    <a class="session-list-link" role="button" data-id="{{session.session_id}}">
+                                                    {{ session.session_checkin|format_date }}</a>
+                                                </li>
+                                        {%  endfor %}
+                                    </ul>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="col-sm-12 col-md-9">
                         <div class="card">
 
@@ -86,70 +116,21 @@
                             </div>
 
                             <div class="card-body">
-                                <div class="row">
-
-                                    <div class="col-3 session-list">
-                                        {% if patient.patientSessions|length == 0 %}
-                                            No Previous sessions found.
-                                        {% else%}
-                                            <ul>
-                                                {% for session in patient.patientSessions %}
-                                                        <li class="{% if forloop.first %} active{% endif %}">
-                                                            <a class="session-list-link" role="button" data-id="{{session.session_id}}">
-                                                            {{ session.session_checkin|format_date }}</a>
-                                                        </li>
-                                                {%  endfor %}
-                                            </ul>
-                                        {% endif %}
-                                    </div>
-                                    <div class="col-9 session-view">
-                                        <!-- Add prev sessions here -->
-                                        {% include '_new_record.html' %}
-                                    </div>
-
-                                </div>                                
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-sm-12 col-md-3">
-                        <div class="card">
-                            <div class="card-header">
-                                <i class="far fa-calendar-alt"></i> Appointments
-                                <span class="add_btn">
-                                    <button class="btn btn-primary btn-sm" id="new_patient_appointment">
-                                        <i class="fas fa-plus-circle"></i>
-                                        New
-                                    </button>
-                                </span>
                                 
-                            </div>
-                            
-                            <div class="card-body">
-                                <div>
-                                    <form action="/api/create_document" method="POST">
-                                        <div class="form-group">
-                                            <label>Session Information</label>
-                                            <textarea name="document_content" class="form-input"></textarea>
-                                        </div>
-                                        <div class="form-group">
-                                            <label>Patient Visible Content</label>
-                                            <textarea name="patient_content" class="form-input"></textarea>
-                                        </div>
-                                        <button class="btn btn-primary">Submit</button>
-                                    </form>
-                                </div>
-
+                                <!-- Add prev sessions here -->
+                                {% include '_new_record.html' %}
+                                {% include '_sessions.html' %}
+                              
                             </div>
                         </div>
                     </div>
+
+                    
                 </div>
             </div>
 
         </div>
     </div>
 </div>
-
-{{patient}}
 
 {% endblock %}

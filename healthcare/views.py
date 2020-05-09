@@ -8,11 +8,13 @@ import requests
 from django.http import HttpResponse
 from django.contrib import messages
 from django.shortcuts import render, redirect
+from django.conf import settings
 
 # Most from firebase documentation
 # https://firebase.google.com/docs/firestore/query-data/get-data
 import env_vars
 import modules.firebase as fb
+from api.views import get_download_link, contract_interaction
 
 # Firebase Firestor from here:
 # https://github.com/firebase/firebase-admin-python
@@ -23,10 +25,10 @@ from modules.decrypter import retrieve_encrypted_data, decrypt_to_dict
 FCM_URL = os.environ.get('FCM_URL')
 FCM_SCOPES = list(os.environ.get('FCM_SCOPES'))
 DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
-CONTRACT_ENDPOINT = os.environ.get('CONTRACT_ENDPOINT')
 
-# Create your views here.
+
 def index(request):
+    """ List all ongoing sessions """
     fire = fb.Firebase('hp')
     sessions = fire.openSessions()
     docs = sessions.stream()
@@ -40,28 +42,17 @@ def index(request):
     return render(request, 'sessions.html', { 'docs' : doc_list })
 
 
-def contract_interaction(data_key, hashes, action):
-    data = json.dumps({
-        "user": data_key,
-        "hashes": [h.get('document_hash') for h in hashes],
-        "action": action
-    })
-    resp = requests.post(CONTRACT_ENDPOINT, {"data": data})
-    if resp.status_code == 200:
-        return resp.json()
-    else:
-        return None
-
-def view_patient(request, id):
+def view_patient(request, session_id):
+    """ View the patient """
     error = ""
     fire = fb.Firebase('hp')
-    user_session = fire.findSession(id)
+    user_session = fire.findSession(session_id)
     if user_session is None:
-        return render(request, 'wrong_session.html', {'session_id' : id})
-    if request.session.get(str(id)):
-        print("DOCUMENT HASHES")
-        hashes = request.session.get(str(id))
-        print(str(id))
+        return render(request, 'wrong_session.html', {'session_id' : session_id})
+
+    # This is set by the api if a new document is created
+    if request.session.get(session_id):
+        hashes = request.session.get(session_id)
         contract_response = contract_interaction(
             data_key=user_session.get('data_key'),
             hashes=hashes,
@@ -70,45 +61,51 @@ def view_patient(request, id):
         if contract_response is None:
             messages.error(request, "Could add documents to distributed ledger. Please try again or contact your administrator")
         else:
-            print("CONTRACT RESPONSE")
-            print(contract_response)
             session = {
-                "session_id": str(id),
-                "session_documents": request.session.get(str(id))
+                "session_id": session_id,
+                "session_documents": request.session.get(session_id)
             }
             updates = fire.updateSession(session).to_dict()
-            print(updates)
         
-        del request.session[str(id)]
+        del request.session[session_id]
         request.session.modified = True
 
     encrypted_data = retrieve_encrypted_data(user_session.get('data_key'))
     if encrypted_data == None:
-       return render(request, 'wrong_session.html', {'session_id' : id})
-    decrypted_data = decrypt_to_dict(encrypted_data, str(id))
+       return render(request, 'wrong_session.html', {'session_id' : session_id})
+    decrypted_data = decrypt_to_dict(encrypted_data, session_id)
     if decrypted_data == None:
-       return render(request, 'wrong_session.html', {'session_id' : id})
+       return render(request, 'wrong_session.html', {'session_id' : session_id})
 
     decrypted_data['patientSessions'] = replace_current_and_order_desc(
         decrypted_data.get('patientSessions'), user_session)
+    add_download_links(decrypted_data['patientSessions'])
     print(decrypted_data)
     documents = []
-    #for s in decrypted_data.get('patientSessions'):
-    #    for _k, _s in s.items():
-    #       if _k == 'session_documents':
-    #            documents = documents + list(_s.values())
-    #decrypted_data = {}
-    #documents = ["a", "b"]
     return render(request, 'patient.html', {'session': user_session, 
                                             'patient': decrypted_data,
                                             'documents': documents, })
 
+def add_download_links(sessions):
+    for session in sessions:
+        documents = session.get('session_documents')
+        for document in documents:
+            document.setdefault('content', None)
+            doc_hash = document.get('document_hash')
+            doc_type = document.get('document_type')
+            download_link = get_download_link(doc_hash, doc_type)
+            document['download_link'] = download_link
+            if document.get('document_name') == 'Session Record':
+                res = requests.get(download_link)
+                if res.status_code == 200:
+                    document['content'] = res.json()
+
+
 def replace_current_and_order_desc(sessions, user_session):
+    """ Helper function to order the sessions in DESC order """
     reordered_sessions = []
     for session in sessions:
-        print()
         if session.get('session_id') == user_session.get('session_id'):
-            print(True)
             reordered_sessions = [user_session] + reordered_sessions
         else:
             reordered_sessions = [session] + reordered_sessions
@@ -150,7 +147,6 @@ def request_sharing(request):
                                    content_type='application/javascript')
 
 def send_to_topic(topic_name, session_shared, session_documents):
-    # [START send_to_topic]
     # The topic name can be optionally prefixed with "/topics/".
     topic = topic_name
     # See documentation on defining a message payload.
@@ -162,10 +158,8 @@ def send_to_topic(topic_name, session_shared, session_documents):
         },
         topic=topic,
     )
-
     # Send a message to the devices subscribed to the provided topic.
     response = send(message)
     # Response is a message ID string.
     print('Successfully sent message:', response)
-    # [END send_to_topic]
     return
