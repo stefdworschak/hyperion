@@ -128,7 +128,6 @@ def hash_and_store_file(byte_object, extension, attachment=False):
     if not attachment:
         file_hash = create_hash_string(byte_object)
         store_file_in_bucket(byte_object.decode('utf-8'), file_hash+".json")
-        print(str(byte_object.decode('utf-8')))
     else:
         file_hash = create_hash_string(byte_object.file.getvalue())
         store_file_in_bucket(byte_object.file.getvalue(), file_hash+extension)

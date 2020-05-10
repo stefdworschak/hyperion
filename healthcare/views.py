@@ -102,12 +102,13 @@ def end_session(request, session_id):
     data_key = request.POST.get("data_key")
     session = {
             "session_id": session_id,
-            "session_shared": 3,
+            "session_shared": "3",
             "data_key": ""
     }
     session_updates = FIRE.updateSession(session).to_dict()
     delete_encrpted_data(data_key)
-    del request.session[session_id]
+    if request.session.get(session_id):
+        del request.session[session_id]
     return redirect('/sessions')
 
 @login_required(redirect_field_name=None, login_url='/')
@@ -129,7 +130,7 @@ def create_session(request):
             str(d.year + d.month + d.day + d.hour + d.minute + d.second))
         new_session = {
             "session_id": new_session_id,
-            "session_shared": 0,
+            "session_shared": "0",
             "session_checkin": d,
             "session_details": {
                 "pain_scale": "",
@@ -168,7 +169,6 @@ def hp_handle_404(request, exception):
 @login_required(redirect_field_name=None, login_url='/')
 def update_data(request):
     order = request.POST.get('order')
-    print(order)
     session_list = list_sessions(order)
     return HttpResponse(json.dumps(session_list, default=json_util.default), 
                         content_type='application/javascript')
@@ -224,10 +224,6 @@ def replace_current_and_order_desc(sessions, user_session):
         else:
             reordered_sessions = [session] + reordered_sessions
     return reordered_sessions
-
-
-def sort_sessions(d):
-    return -d['session_shared']
 
 
 def send_to_topic(topic_name, session_shared, session_documents, user_id=""):
