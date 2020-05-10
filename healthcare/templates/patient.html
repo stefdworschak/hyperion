@@ -16,9 +16,10 @@
                             <div class="card-header">
                                 <i class="far fa-hospital"></i> Session Details
                                 <span class="add_btn">
-                                    <form action="end_session/{{session.session_id}}" method="POST" enctype="multipart/form-data">
+                                    <form action="/sessions/end_session/{{session.session_id}}" method="POST" enctype="multipart/form-data">
+                                        {% csrf_token %}
                                         <input type="hidden" value="{{session.data_key}}" name="data_key" />
-                                        <button class="btn btn-success btn-sm" id="finish_session" {% if files_complete != 2 %}disabled{% endif%}>
+                                        <button class="btn btn-success btn-sm" id="finish_session">
                                             <i class="fas fa-check"></i>
                                             Finish Session
                                         </button>

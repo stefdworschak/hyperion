@@ -45,7 +45,8 @@
                     let button_template = "";
                     while(json.length >0){
                         const session = json.shift();
-                        switch(session.session_shared){
+                        const session_shared = session.session_shared.toString();
+                        switch(session_shared){
                             case '0':
                                 button_template = `
                                     <a href="#" class="btn btn-primary" 
@@ -69,7 +70,7 @@
                                         data-session-id=${ session.session_id }>Request Data Access</a>`;
                                 break;
                         }
-                        if(session.session_shared != '3' && new Date(session.session_checkin) <= new Date()){
+                        if(session_shared != '3' && new Date(session.session_checkin) <= new Date()){
                             template += `
                             <div class="row pull-left">
                                 <div class="card" width="100%">

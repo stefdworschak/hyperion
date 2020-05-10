@@ -94,7 +94,6 @@ def view_patient(request, session_id):
          'current_session_documents': req_session.get('documents'),
          'tomorrow': (date.today() + timedelta(days=1)).strftime('%Y-%m-%d'),
          'followup_sessions': followup_sessions,
-
         })
 
 @login_required(redirect_field_name=None, login_url='/')
