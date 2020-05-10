@@ -74,8 +74,13 @@ def retrieve_encrypted_data(data_key):
         print("An error occurred", e)
     return encrypted_data
 
-
-#if __name__ == '__main__':
-#    key = "42722742462086"
-#    data = retrieve_encrypted_data(key)
-#    print(data)
+def delete_encrpted_data(data_key):
+    try:
+        myclient = pymongo.MongoClient(MONGO_URL)
+        mydb = myclient["hyperion"]
+        mycol = mydb["hyperion_auth"]
+        record = mycol.delete_one({"owner_id":data_key})
+        return True
+    except Exception as e:
+        print("An error occurred", e)
+    return False

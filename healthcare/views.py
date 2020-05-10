@@ -24,7 +24,8 @@ from api.views import get_download_link, contract_interaction
 # https://github.com/firebase/firebase-admin-python
 from firebase_admin.messaging import (Message, Notification, send)
 
-from modules.decrypter import retrieve_encrypted_data, decrypt_to_dict
+from modules.decrypter import (retrieve_encrypted_data, decrypt_to_dict,
+                               delete_encrpted_data)
 
 FCM_URL = os.environ.get('FCM_URL')
 FCM_SCOPES = list(os.environ.get('FCM_SCOPES'))
@@ -84,7 +85,7 @@ def view_patient(request, session_id):
     decrypted_data['patientSessions'] = replace_current_and_order_desc(
         decrypted_data.get('patientSessions'), user_session)
     add_download_links(decrypted_data['patientSessions'])
-    print(decrypted_data)
+ 
     documents = []
     return render(request, 'patient.html', 
         {'session': user_session, 
@@ -98,16 +99,22 @@ def view_patient(request, session_id):
 
 @login_required(redirect_field_name=None, login_url='/')
 def end_session(request, session_id):
+    data_key = request.POST.get("data_key")
     session = {
             "session_id": session_id,
-            "session_shared": 3
+            "session_shared": 3,
+            "data_key": ""
     }
     session_updates = FIRE.updateSession(session).to_dict()
+    delete_encrpted_data(data_key)
     del request.session[session_id]
-    return redirect('/hp')
+    return redirect('/sessions')
 
 @login_required(redirect_field_name=None, login_url='/')
 def create_session(request):
+    """ Creates new session for a follow-up
+
+    Redirects back to the patient page """
     previous_page = request.META['HTTP_REFERER']
     if request.POST == None:
         messages.error(request, "Missing date and time")
@@ -150,10 +157,7 @@ def create_session(request):
         if not request.session.get(session_id):
             request.session[session_id] = {}
         if not request.session[session_id].get('followup_sessions'):
-            print("FOLLOW UP SESSIONS")
             request.session[session_id].setdefault('followup_sessions',[])
-        #new_session['session_checkin'] = new_session['session_checkin'].strftime(DATE_FORMAT)
-        #print(new_session)
         request.session[session_id]['followup_sessions'].append(new_session_json)
         return redirect(previous_page)
 
@@ -171,7 +175,6 @@ def update_data(request):
 
 @login_required(redirect_field_name=None, login_url='/')
 def request_sharing(request):
-    fire = fb.Firebase('sharing_request')
     session = request.POST
     updates = FIRE.updateSession(session).to_dict()
     updates['session_checkin'] = updates['session_checkin'].strftime(
@@ -228,9 +231,8 @@ def sort_sessions(d):
 
 
 def send_to_topic(topic_name, session_shared, session_documents, user_id=""):
-    # The topic name can be optionally prefixed with "/topics/".
+    """ Sends a new message to an existing FirebaseMessaging topic """
     topic = topic_name
-    # See documentation on defining a message payload.
     message = Message(
         data={
             'session_id': topic_name,
@@ -240,8 +242,5 @@ def send_to_topic(topic_name, session_shared, session_documents, user_id=""):
         },
         topic=topic,
     )
-    # Send a message to the devices subscribed to the provided topic.
     response = send(message)
-    # Response is a message ID string.
-    print('Successfully sent message:', response)
     return

@@ -16,10 +16,14 @@
                             <div class="card-header">
                                 <i class="far fa-hospital"></i> Session Details
                                 <span class="add_btn">
-                                    <button class="btn btn-success btn-sm" id="finish_session" {% if files_complete != 2 %}disabled{% endif%}>
-                                        <i class="fas fa-check"></i>
-                                        Finish Session
-                                    </button>
+                                    <form action="end_session/{{session.session_id}}" method="POST" enctype="multipart/form-data">
+                                        <input type="hidden" value="{{session.data_key}}" name="data_key" />
+                                        <button class="btn btn-success btn-sm" id="finish_session" {% if files_complete != 2 %}disabled{% endif%}>
+                                            <i class="fas fa-check"></i>
+                                            Finish Session
+                                        </button>
+                                    </form>
+                                    
                                 </span>
                             </div>
                             <div class="card-body card-record-toggle">

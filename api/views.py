@@ -44,7 +44,8 @@ def validate_hashes(request):
         if isinstance(data['hashes'], str):
             data['hashes'] = json.loads(data['hashes'])
         contract_response = None
-        contract_response = contract_interaction(data['data_key'], data['hashes'], data['action'])
+        contract_response = contract_interaction(
+            data['data_key'], data['hashes'], data['action'])
         if contract_response is None:
             return JsonResponse({"status":505, "data":None})
         return JsonResponse({"status":200, "data":contract_response})
@@ -52,15 +53,18 @@ def validate_hashes(request):
         return JsonResponse({"status":505, "data":None})
 
 def create_document(request):
+    """ Creates a new Session Record document, hahes and stores the files
+    on Firebase Storage 
+    
+    It also adds the new document records to the existing request.session to
+    reused them accross views
+
+    Redirects back to the patient page """
     file_hashes = []
     files = request.FILES
     data = request.POST
-    # TODO: Add file encryption
-    # 1) Hash file contents
-    # 2) Store file with hash as name of firestore
-    # 3) Update session information
-    # 3) Udate session information in firestore
-    # 4) Render new document
+
+    # Create and hash Session Record
     d = json.dumps({
         'session_id': data.get('session_id'),
         'document_content': data.get('document_content'),
@@ -102,18 +106,25 @@ def create_document(request):
     if contract_response is None:
         messages.error(request, "Could add documents to distributed ledger. Please try again or contact your administrator")
     else:
+        # Store documents in FirebaseFirestore
         session = {
             "session_id": data.get('session_id'),
             "session_documents": file_hashes,
             "session_content": d,
         }
         updates = FIRE.updateSession(session).to_dict()
+
+    # Add document records to session to reuse on patient page
     if not request.session.get(data.get('session_id')):
         request.session[data.get('session_id')] = {}
     request.session[data.get('session_id')].update({"documents": file_hashes})
     return redirect(f"/sessions/patient/{data.get('session_id')}")
 
+
 def hash_and_store_file(byte_object, extension, attachment=False):
+    """ Creates a file_hash and stores the file in a bucket in FirebaseStorage 
+    
+    Returns the file_hash """
     if not attachment:
         file_hash = create_hash_string(byte_object)
         store_file_in_bucket(byte_object.decode('utf-8'), file_hash+".json")
@@ -122,6 +133,15 @@ def hash_and_store_file(byte_object, extension, attachment=False):
         file_hash = create_hash_string(byte_object.file.getvalue())
         store_file_in_bucket(byte_object.file.getvalue(), file_hash+extension)
     return file_hash
+
+
+def create_hash_string(byte_object):
+    """Create hash from byte object
+
+    Returns hash as hex string"""
+    sha256 = SHA256.new()
+    sha256.update(byte_object)
+    return sha256.hexdigest()
 
 
 # Firestore storage reference:
@@ -143,14 +163,6 @@ def store_file_in_bucket(filecontent, filename):
     default_storage.delete(path)
     return path
 
-
-def create_hash_string(byte_object):
-    """Create hash from byte object
-
-    Returns hash as hex string"""
-    sha256 = SHA256.new()
-    sha256.update(byte_object)
-    return sha256.hexdigest()
 
 def get_download_link(file_hash, file_type):
     bucket = storage.bucket(app=APP)

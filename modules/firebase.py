@@ -42,13 +42,14 @@ class Firebase:
 
 
     def updateSession(self, session):
-        #try:
+        """ Updates an existing FirebaseFirestore document 
+        
+        Returns updated document """
         doc_ref = self.db.collection(u'checkins').document(session['session_id'])
         doc_ref.update(session)
         updates = doc_ref.get()
         return updates
-        #except Exception as e:
-        #    return {}
+
 
 
     def createSession(self, session):
