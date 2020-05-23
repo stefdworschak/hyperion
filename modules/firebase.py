@@ -64,14 +64,14 @@ class Firebase:
 
     def findSession(self, session_id):
         collection = self.db.collection(u'checkins')
-        session = collection.document(str(session_id)).get().to_dict()
+        session = collection.document(session_id).get().to_dict()
         if session is None:
             return None
         
         session['session_checkin'] = session['session_checkin'].strftime(
             DATE_FORMAT)
 
-        if session['session_shared'] != '2':
+        if session['session_shared'] != 2:
             return None
         return session
 

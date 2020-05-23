@@ -2,6 +2,7 @@
     <form id="createDocumentForm" action="/api/create_document" method="POST" enctype="multipart/form-data">
         {% csrf_token %}
         <input type="hidden" name="session_id" value="{{session.session_id}}" />
+        <input type="hidden" name="data_key" value="{{session.data_key}}" />
         <div class="form-group">
             <label>Session Information</label>
             <textarea name="document_content" class="form-control" rows="5" required></textarea>

@@ -37,7 +37,7 @@
             $.ajax({
                 method:'POST',
                 url:'update/',
-                data: JSON.stringify({"order": "asc"}),
+                data: {"order": "asc"},
                 success:function(res){
                     console.log(res);
                     const json = JSON.parse(res);

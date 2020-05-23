@@ -3,6 +3,10 @@
         {% csrf_token %}
         <input type="hidden" name="session_id" value="{{session.session_id}}" />
         <input type="hidden" name="data_key" value="{{session.data_key}}" />
+        <input type="hidden" name="symptoms" value="{{ session.session_details.symptoms }}" />
+        <input type="hidden" name="symptoms_duration" value="{{ session.session_details.symptoms_duration }}" />
+        <input type="hidden" name="pre_conditions" value="{{ session.session_details.pre_conditions }}" />
+        <input type="hidden" name="pain_scale" value="{{ session.session_details.pain_scale }}" />
         <div class="form-group">
             <label>Appointment Date</label>
             <input type="date" name="new_session_date" class="form-control" min="{{ tomorrow }}" required />

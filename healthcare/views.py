@@ -77,10 +77,10 @@ def view_patient(request, session_id):
 
     encrypted_data = retrieve_encrypted_data(user_session.get('data_key'))
     if encrypted_data == None:
-       return render(request, 'wrong_session.html', {'session_id' : session_id})
+        return render(request, 'wrong_session.html', {'session_id' : session_id})
     decrypted_data = decrypt_to_dict(encrypted_data, session_id)
     if decrypted_data == None:
-       return render(request, 'wrong_session.html', {'session_id' : session_id})
+        return render(request, 'wrong_session.html', {'session_id' : session_id})
 
     decrypted_data['patientSessions'] = replace_current_and_order_desc(
         decrypted_data.get('patientSessions'), user_session)
@@ -101,7 +101,7 @@ def end_session(request, session_id):
     data_key = request.POST.get("data_key")
     session = {
             "session_id": session_id,
-            "session_shared": "3",
+            "session_shared": 3,
             "data_key": ""
     }
     session_updates = FIRE.updateSession(session).to_dict()
@@ -129,13 +129,13 @@ def create_session(request):
             str(d.year + d.month + d.day + d.hour + d.minute + d.second))
         new_session = {
             "session_id": new_session_id,
-            "session_shared": "0",
+            "session_shared": 0,
             "session_checkin": d,
             "session_details": {
-                "pain_scale": "",
-                "pre_conditions": "",
-                "symptoms": "",
-                "symptoms_duration": ""
+                "pain_scale": (request.POST.get('symptoms') or ""),
+                "pre_conditions": (request.POST.get('symptoms_duration') or ""),
+                "symptoms": (request.POST.get('pre_conditions') or "") + " (Follow-up session)",
+                "symptoms_duration": (request.POST.get('pain_scale') or "")
             },
             "session_documents": []
         }

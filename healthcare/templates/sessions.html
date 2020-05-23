@@ -32,12 +32,11 @@
         $('.btn.btn-primary').click(requestSharing);
 
         function updateData(){
-            let get_param = window.location.search;
-            console.log(get_param);
+            console.log({"order": "desc"})
             $.ajax({
                 method:'POST',
                 url:'update/',
-                data: JSON.stringify({"order": "desc"}),
+                data: {"order": "desc"},
                 success:function(res){
                     console.log(res);
                     const json = JSON.parse(res);
