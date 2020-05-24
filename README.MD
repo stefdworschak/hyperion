@@ -20,9 +20,15 @@ For any questions around the project please get in touch.
 
 ## Related Repositories
 
-- [Hyperion Android Application](https://github.com/stefdworschak/hyperion_mobile_app)
+- [Hyperion Android Application](https://github.com/stefdworschak/hyperion_mobile_app) 
+  - APK: [Download here](http://dworschak-media.com/Hyperion.apk)
+  - IMPORTANT! Don't use any real personal data since anybody with demo access will be able to see it.
 - [Hyperion Web Application](https://github.com/stefdworschak/hyperion)
+  - Deployed at: [hyperion-health.com](https://www.hyperion-health.com)
+  - Demo user: `demo`
+  - Demo password: `fakepassword`
 - [Hyperion Smart Contract API](https://github.com/stefdworschak/hyperion_contract_api)
+  - Copy Solidity contract from [Validator.sol](https://github.com/stefdworschak/hyperion_contract_api) to [Remix](https://remix.ethereum.org/) to test (max. compiler version 0.5.17)
 
 ## Project Presentation Video
 
