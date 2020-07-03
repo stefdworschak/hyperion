@@ -4,6 +4,7 @@ import json
 import os
 import requests
 from uuid import uuid4
+import time
 
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
@@ -44,8 +45,15 @@ def validate_hashes(request):
         if isinstance(data['hashes'], str):
             data['hashes'] = json.loads(data['hashes'])
         contract_response = None
-        contract_response = contract_interaction(
-            data['data_key'], data['hashes'], data['action'])
+        # TODO: disable after demo
+        contract_response = {
+            'status': 200,
+            'data_type': 'validate',
+            'data': ['0x'+h.get('document_hash') for h in data['hashes']]
+        }
+        # TODO: enable after demo
+        #contract_response = contract_interaction(
+        #    data['data_key'], data['hashes'], data['action'])
         if contract_response is None:
             return JsonResponse({"status":505, "data":None})
         return JsonResponse({"status":200, "data":contract_response})
@@ -97,11 +105,14 @@ def create_document(request):
             file_hashes.append(f)
 
     # Save hashes on the distributed ledger
-    contract_response = contract_interaction(
-            data_key=data.get('data_key'),
-            hashes=file_hashes,
-            action="addMultiple"
-            )
+    # TODO: Rollback to master after demo
+    #contract_response = contract_interaction(
+    #        data_key=data.get('data_key'),
+    #        hashes=file_hashes,
+    #        action="addMultiple"
+    #        )
+    contract_response = True
+    time.sleep(2)
 
     if contract_response is None:
         messages.error(request, "Could add documents to distributed ledger. Please try again or contact your administrator")
